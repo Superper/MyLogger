@@ -3,18 +3,17 @@ project(loger)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(loger main.cpp
-
-        log/util/AsyncFileAppender.cpp
-        log/util/AsyncFileAppender.h
-        log/util/LogBuffer.cpp
-        log/util/LogBuffer.h
-        log/util/LogFile.cpp
-        log/util/LogFile.h
-        log/util/Thread.cpp
-        log/util/Thread.h
-        log/Logger.cpp
-        log/Logger.h
-        log/util/LogConfig.cpp
-        log/util/LogConfig.h
+add_executable(loger
+        src/main.cpp
+        src/util/AsyncFileAppender.cpp
+        src/util/AsyncFileAppender.h
+        src/util/LogBuffer.cpp
+        src/util/LogBuffer.h
+        src/util/LogFile.cpp
+        src/util/LogFile.h
+        src/util/Thread.cpp
+        src/util/Thread.h
+        src/Logger.cpp
+        src/Logger.h
+        src/util/LogConfig.h
         )

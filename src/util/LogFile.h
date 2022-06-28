@@ -53,7 +53,7 @@ private:
     uint8_t file_writer_type_;
     constexpr static int kRollPerSeconds = 60 * 60 * 24;
 
-    static std::string getLogFileName(const std::string &basename, time_t *now);
+    static std::string getLogFileName(const std::string &basename);
 };
 
 

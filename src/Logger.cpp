@@ -6,7 +6,6 @@
 #include <vector>
 #include <cstring>
 #include "Logger.h"
-
 Logger* Logger::instance_ = new Logger();
 Logger* Logger::GetInstance() {
 
@@ -21,26 +20,7 @@ void Logger::SetLogConfig(const LogConfig &lcf) {
     asyncfa_->logcfg_ = lcf;
 }
 
-void Logger::Info(const char *msg) {
-    if(msg == nullptr){
-        return;
-    }
-    WriteLog(LogLevel::INFO,__FILE__,__FUNCTION__ ,__LINE__,msg);
-}
-
-void Logger::Error(const char *msg) {
-    WriteLog(LogLevel::ERROR,__FILE__,__FUNCTION__ ,__LINE__,msg);
-}
-
-void Logger::Fatal(const char *msg) {
-    WriteLog(LogLevel::FATAL,__FILE__,__FUNCTION__ ,__LINE__,msg);
-}
-
-void Logger::Debug(const char *msg) {
-    WriteLog(LogLevel::DEBUG,__FILE__,__FUNCTION__ ,__LINE__,msg);
-}
-
-void Logger::WriteLog(LogLevel log_level, const char *file_name, const char *func_name, int32_t line_num, const char* msg) {
+void Logger::WriteLog(LogLevel log_level, const char *file_name,uint32_t line_num, const char* msg) {
     //判断日志等级
     if (log_level < asyncfa_->logcfg_.log_level) {
         return;
@@ -60,14 +40,12 @@ void Logger::WriteLog(LogLevel log_level, const char *file_name, const char *fun
     }*/
     std::string data;
     data.append(TimeToString()+"-");
-    data.append(GetLogLevlToString(log_level) + "-");
+    data.append(GetLogLevelToString(log_level) + "-");
     data.append(file_name);
-    data.append("-");
-    data.append(func_name);
     data.append("-");
     data.append(std::to_string(line_num) + "-");
     data.append(msg);
-
+    data.append("\n");
     {
         std::lock_guard<std::mutex> lock(asyncfa_mutex_);
         asyncfa_->append(data.data(), data.size());
@@ -88,7 +66,7 @@ std::string Logger::TimeToString() {
     return buf;
 }
 
-std::string Logger::GetLogLevlToString(LogLevel level) {
+std::string Logger::GetLogLevelToString(LogLevel level) {
     std::string str_level;
     switch (level) {
         case INFO:
@@ -110,6 +88,6 @@ std::string Logger::GetLogLevlToString(LogLevel level) {
 }
 
 Logger::Logger() {
-    asyncfa_ = new AsyncFileAppender("./log/");
+    asyncfa_ = new AsyncFileAppender();
 }
 

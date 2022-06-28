@@ -5,18 +5,18 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <sys/stat.h>
 #include "AsyncFileAppender.h"
 #include "LogFile.h"
 #include"../Logger.h"
-AsyncFileAppender::AsyncFileAppender(std::string basename)
+AsyncFileAppender::AsyncFileAppender()
         : started_(false),
           running_(false),
           persist_period_(logcfg_.file_option.log_flush_interval),
-          basename_(std::move(basename)),
-          //TODO cond,conutndown
+          basename_(logcfg_.file_option.file_path),
           persit_thread_(std::bind(&AsyncFileAppender::threadFunc,this),"AsyncLogging"),
           cur_buffer_( new LogBuffer(logcfg_.log_buffer_size)){
-              mkdir(basename_.c_str());
+              mkdir(basename_.c_str(),0755);
               start();
 }
 
@@ -47,7 +47,6 @@ void AsyncFileAppender::start() {
     started_ = true;
     running_ = true;
     persit_thread_.start();
-// TODO
 //  cv_.wait(mutex_);
 }
 
@@ -58,24 +57,22 @@ void AsyncFileAppender::stop() {
 }
 
 void AsyncFileAppender::threadFunc() {
-    std::unique_ptr<LogBuffer> buffer(new LogBuffer(logcfg_.log_buffer_size));     //buffer的指针
-    std::vector<std::unique_ptr<LogBuffer>> persist_buffers;                                  //持久化的buffer
-    persist_buffers.resize(logcfg_.log_buffer_nums);                                  //设置buffer大小
-    LogFile log_file(basename_, logcfg_.file_option.log_flush_file_size,                   //初始化文件写入设置
-                     logcfg_.file_option.log_flush_interval, 1024);
-
-//TODO
-//    countdown_latch_.countDown();                                                               //？
+    std::unique_ptr<LogBuffer> buffer(new LogBuffer(logcfg_.log_buffer_size));
+    std::vector<std::unique_ptr<LogBuffer>> persist_buffers;
+    persist_buffers.reserve(logcfg_.log_buffer_nums);
+    LogFile log_file(basename_,
+                     logcfg_.file_option.log_flush_file_size,
+                     logcfg_.file_option.log_flush_interval,
+                     logcfg_.file_option.log_flush_count);
 
     while (running_) {                                                                       //线程中循环执行
         {
-            std::unique_lock<std::mutex> lock(mutex_);                                                         //互斥锁
+            std::unique_lock<std::mutex> lock(mutex_);
 
-            //if?
-            while (buffers_.empty()) {                                                               //存有日志
+            if (buffers_.empty()) {
                 cv_.wait_for(lock, std::chrono::seconds(persist_period_));
             }
-            if (buffers_.empty() && cur_buffer_->length() == 0) {                                 //一条日志都没有直接continue
+            if (buffers_.empty() && cur_buffer_->length() == 0) {
                 continue;
             }
 

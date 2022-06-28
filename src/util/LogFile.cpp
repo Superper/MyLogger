@@ -4,6 +4,7 @@
 
 #include "LogFile.h"
 
+#include <memory>
 #include <utility>
 #include <chrono>
 #include <iostream>
@@ -67,7 +68,6 @@ private:
 class AppendFileWriter : public FileWriter {
 private:
     std::ofstream *fp_;
-    char buffer_[64 * 1024]{};
     uint32_t writen_ = 0;
 public:
     explicit AppendFileWriter(const std::string &filename) {
@@ -101,7 +101,7 @@ LogFile::LogFile(std::string basename, uint32_t roll_size, uint32_t flush_interv
         last_roll_(0),
         last_flush_(0) {
     time_t now = 0;
-    std::string filename = getLogFileName(basename_, &now);
+    std::string filename = getLogFileName(basename_);
 /*    是否使用mmap形式写入文件
     if (file_writer_type == FileWriterType::MMAPFILE) {
         file_ = std::make_shared<MMapFileWriter>(filename, roll_size_);
@@ -114,23 +114,23 @@ LogFile::LogFile(std::string basename, uint32_t roll_size, uint32_t flush_interv
 
 void LogFile::append(const char *msg, size_t len) {
     file_->append(msg, len);
-    if (file_->writtenBytes() > roll_size_) {
+    static int aaaa  =0;
+    if (file_->writtenBytes() > roll_size_) {       //写入数据大于文件大小限制，滚动日志，滚动方式暂设置为隔天滚动
         rollFile();
     } else {
         ++count_;
-        if (count_ >= check_freq_count_) {
+        if (count_ >= check_freq_count_) {          //写入次数大于写入次数限制，滚动日志
             count_ = 0;
-           time_t now = time(nullptr);
-            time_t this_period = now / kRollPerSeconds * kRollPerSeconds;
-            if (this_period != start_of_period_) {
+            time_t now = time(nullptr);
+            time_t this_period = now / kRollPerSeconds * kRollPerSeconds;       //当天开始时间点
+            if (this_period != start_of_period_) {              //如果隔天，进行滚动检查
                 rollFile();
-            } else if (now - last_flush_ > flush_interval_) {
+            } else if (now - last_flush_ > flush_interval_) {   //如果大于刷新时间间隔，刷新
                 last_flush_ = now;
-            file_->flush();
+                file_->flush();
+            }
         }
     }
-}
-
 }
 
 void LogFile::flush() {
@@ -139,42 +139,31 @@ void LogFile::flush() {
 
 bool LogFile::rollFile() {
     time_t now = 0;
-    std::string filename = getLogFileName(basename_, &now);
     time_t start = now / kRollPerSeconds * kRollPerSeconds;
 
-    if (now > last_roll_) {
+    if (now > last_roll_) {     //日过隔天，生成新日志
         last_roll_ = now;
         last_flush_ = now;
         start_of_period_ = start;
-        /*if (file_writer_type_ == FileWriterType::MMAPFILE) {
-            file_.reset(new MMapFileWriter(filename, roll_size_));
-        } else {
-        }*/
-        file_.reset(new AppendFileWriter(filename));
+        std::string filename = getLogFileName(basename_);
+        file_ = std::make_shared<AppendFileWriter>(filename);
     }
     return true;
 }
 
-std::string LogFile::getLogFileName(const std::string &basename, time_t *now) {
+std::string LogFile::getLogFileName(const std::string &basename) {
     std::string filename;
-//    filename.reserve(basename.size() + 64);
-//    filename = basename;
-//
-//    char timebuf[32];
-//    struct tm tm;
-//    *now = time(NULL);
-//    gmtime_r(now, &tm); // FIXME: localtime_r ?
-//    strftime(timebuf, sizeof timebuf, ".%Y%m%d-%H%M%S.", &tm);
-//    filename += timebuf;
-//
-//    filename += getHostName();
-//
-//    char pidbuf[32];
-//    snprintf(pidbuf, sizeof pidbuf, ".%d", getpid());
-//    filename += pidbuf;
-//
-//    filename += ".log";
-//    return filename;
-
-    return "hhhhh.log";
+    filename.append(basename);
+    char buf[128] = {0};
+    time_t microSecondsSinceEpoch = time(nullptr);
+    tm *tm_time = localtime(&microSecondsSinceEpoch);
+    snprintf(buf, 128, "%4d/%02d/%02d",
+             tm_time->tm_year + 1900,
+             tm_time->tm_mon + 1,
+             tm_time->tm_mday);
+    filename.append(std::to_string(tm_time->tm_year + 1900));
+    filename.append(std::to_string(tm_time->tm_mon + 1));
+    filename.append(std::to_string(tm_time->tm_mday));
+    filename.append(".log");
+    return filename;
 }

@@ -16,19 +16,11 @@ public:
     const char *data() const;
     size_t length() const;
     size_t available() const;
-    // for used by GDB
-    void setCookie(void (*cookie)()) { cookie_ = cookie; }
-
 private:
     char *data_;
     const size_t total_;    //buffer总大小
     size_t available_;      //buffer剩余大小
     size_t cur_;            //buffer存量
-    // Must be outline function for cookies.
-    static void cookieStart();
-    static void cookieEnd();
-
-    void (*cookie_)();
 };
 
 

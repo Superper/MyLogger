@@ -13,7 +13,7 @@
 #include <vector>
 class AsyncFileAppender {
 public:
-    explicit AsyncFileAppender(std::string basename);
+    explicit AsyncFileAppender();
 
     ~AsyncFileAppender();
 
@@ -34,9 +34,6 @@ private:
 
     std::mutex mutex_;
     std::condition_variable cv_;
-//    Mutex mutex_;
-//    Condition cond_;
-//    CountDownLatch countdown_latch_;
     Thread persit_thread_;
     std::unique_ptr<LogBuffer> cur_buffer_;
     std::vector<std::unique_ptr<LogBuffer>> buffers_;
