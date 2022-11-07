@@ -21,11 +21,8 @@ struct LogConfig {
     LogLevel log_level = LogLevel::INFO;
     struct FileOption {
         std::string file_path = "./log/";  //日志路径
-        uint32_t log_flush_file_size = 10000;   //每个日志大小
-        uint32_t log_flush_interval = 5;    //日志文件flush间隔
-        uint32_t log_flush_count = 200;    //日志文件flush计数
-        uint roll_type;     //1:隔天滚动   2：小时滚动
-//        FileWriterType file_writer_type;  //写入方式,暂时只实现了文件写入，mmap方式未实现
+        uint8_t roll_type;     //1:隔天滚动   2：小时滚动
+        uint8_t log_flush_interval = 5; //刷新事件
     } file_option;
 };
 

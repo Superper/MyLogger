@@ -13,8 +13,8 @@ void test(){
 
 int main() {
 
-//    thread th1(test);
-//    th1.join();
+    thread th1(test);
+    th1.join();
 
 
     return 0;

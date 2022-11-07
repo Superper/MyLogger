@@ -6,9 +6,11 @@
 #include <utility>
 #include <vector>
 #include <sys/stat.h>
+#include <functional>
 #include "AsyncFileAppender.h"
 #include "LogFile.h"
 #include"../Logger.h"
+#include "sys/stat.h"
 
 AsyncFileAppender::AsyncFileAppender()
         : started_(false),
@@ -16,7 +18,7 @@ AsyncFileAppender::AsyncFileAppender()
           persist_period_(logcfg_.file_option.log_flush_interval),
           basename_(logcfg_.file_option.file_path),
           cur_buffer_(new LogBuffer(logcfg_.log_buffer_size)) {
-    mkdir(basename_.c_str(), 755);
+    mkdir(basename_.c_str());
     start();
 }
 
@@ -60,10 +62,7 @@ void AsyncFileAppender::threadFunc() {
     std::unique_ptr<LogBuffer> buffer(new LogBuffer(logcfg_.log_buffer_size));
     std::vector<std::unique_ptr<LogBuffer>> persist_buffers;
     persist_buffers.reserve(logcfg_.log_buffer_nums);
-    LogFile log_file(basename_,
-                     logcfg_.file_option.log_flush_file_size,
-                     logcfg_.file_option.log_flush_interval,
-                     logcfg_.file_option.log_flush_count);
+    LogFile log_file(basename_,logcfg_.file_option.roll_type);
 
     while (running_) {                                                                       //线程中循环执行
         {
