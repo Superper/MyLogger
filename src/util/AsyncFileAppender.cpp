@@ -9,15 +9,15 @@
 #include "AsyncFileAppender.h"
 #include "LogFile.h"
 #include"../Logger.h"
+
 AsyncFileAppender::AsyncFileAppender()
         : started_(false),
           running_(false),
           persist_period_(logcfg_.file_option.log_flush_interval),
           basename_(logcfg_.file_option.file_path),
-          persit_thread_(std::bind(&AsyncFileAppender::threadFunc,this),"AsyncLogging"),
-          cur_buffer_( new LogBuffer(logcfg_.log_buffer_size)){
-              mkdir(basename_.c_str(),0755);
-              start();
+          cur_buffer_(new LogBuffer(logcfg_.log_buffer_size)) {
+    mkdir(basename_.c_str(), 755);
+    start();
 }
 
 AsyncFileAppender::~AsyncFileAppender() {
@@ -46,14 +46,14 @@ void AsyncFileAppender::append(const char *msg, size_t len) {
 void AsyncFileAppender::start() {
     started_ = true;
     running_ = true;
-    persit_thread_.start();
-//  cv_.wait(mutex_);
+    thread_ = new std::thread(std::bind(&AsyncFileAppender::threadFunc, this));
+    thread_->detach();
 }
 
 void AsyncFileAppender::stop() {
     started_ = false;
     cv_.notify_one();
-    persit_thread_.join();
+    thread_->join();
 }
 
 void AsyncFileAppender::threadFunc() {
@@ -91,7 +91,7 @@ void AsyncFileAppender::threadFunc() {
         }
 
         // persist log
-        for (const auto &thebuffer : persist_buffers) {
+        for (const auto &thebuffer: persist_buffers) {
             log_file.append(thebuffer->data(), thebuffer->length());
         }
 

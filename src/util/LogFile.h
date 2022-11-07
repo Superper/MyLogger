@@ -23,7 +23,30 @@ public:
     virtual uint32_t writtenBytes() const = 0;
 };
 
+class AppendFileWriter : public FileWriter {
+private:
+    std::ofstream *fp_;
+    uint32_t writen_ = 0;
+public:
+    explicit AppendFileWriter(const std::string &filename) {
+        fp_ = new std::ofstream;
+        fp_->open(filename, std::ios::out);
+    }
 
+    ~AppendFileWriter() override {
+        delete fp_;
+    }
+
+    void append(const char *msg, size_t len) override {
+
+        fp_->write(msg, (long long) len);
+        writen_ += len;
+    }
+
+    void flush() override { fp_->flush(); }
+
+    uint32_t writtenBytes() const override { return writen_; }
+};
 
 class LogFile {
 public:
@@ -51,6 +74,7 @@ private:
     time_t last_flush_;
     std::shared_ptr<FileWriter> file_;
     uint8_t file_writer_type_;
+    uint roll_type_;
     constexpr static int kRollPerSeconds = 60 * 60 * 24;
 
     static std::string getLogFileName(const std::string &basename);

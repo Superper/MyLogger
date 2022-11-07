@@ -7,10 +7,11 @@
 
 #include <mutex>
 #include <condition_variable>
-#include "Thread.h"
 #include "LogBuffer.h"
 #include "LogConfig.h"
 #include <vector>
+#include <thread>
+
 class AsyncFileAppender {
 public:
     explicit AsyncFileAppender();
@@ -27,14 +28,16 @@ public:
 private:
 
     void threadFunc();
+
     bool started_;
     bool running_;
     time_t persist_period_;  //logfile刷新时间
     std::string basename_;
 
+    std::thread* thread_;
     std::mutex mutex_;
     std::condition_variable cv_;
-    Thread persit_thread_;
+
     std::unique_ptr<LogBuffer> cur_buffer_;
     std::vector<std::unique_ptr<LogBuffer>> buffers_;
 };

@@ -65,31 +65,8 @@ private:
 */
 
 
-class AppendFileWriter : public FileWriter {
-private:
-    std::ofstream *fp_;
-    uint32_t writen_ = 0;
-public:
-    explicit AppendFileWriter(const std::string &filename) {
-        fp_ = new std::ofstream;
-        fp_->open(filename, std::ios::out);
-    }
 
-    ~AppendFileWriter() override {
-        delete fp_;
-    }
-
-    void append(const char *msg, size_t len) override {
-
-        fp_->write(msg, (long long) len);
-        writen_ += len;
-    }
-
-    void flush() override { fp_->flush(); }
-
-    uint32_t writtenBytes() const override { return writen_; }
-};
-
+using namespace std::chrono;
 LogFile::LogFile(std::string basename, uint32_t roll_size, uint32_t flush_interval, uint32_t check_interval,
                  int file_writer_type) :
         basename_(std::move(basename)),
@@ -114,7 +91,6 @@ LogFile::LogFile(std::string basename, uint32_t roll_size, uint32_t flush_interv
 
 void LogFile::append(const char *msg, size_t len) {
     file_->append(msg, len);
-    static int aaaa  =0;
     if (file_->writtenBytes() > roll_size_) {       //写入数据大于文件大小限制，滚动日志，滚动方式暂设置为隔天滚动
         rollFile();
     } else {
@@ -152,18 +128,34 @@ bool LogFile::rollFile() {
 }
 
 std::string LogFile::getLogFileName(const std::string &basename) {
+
+#define GetDuration(time_scale, time_point) (duration_cast<time_scale>(time_point.time_since_epoch()).count())
+    system_clock::time_point nowTp = system_clock::now();
+    //单独取出ms,mcs,nm
+    uint64_t ms = GetDuration(milliseconds, nowTp) - GetDuration(seconds, nowTp) * 1000;
+    time_t tt = system_clock::to_time_t(nowTp); //利用chrono库自带的方法转换为ctime中的time_t, 会导致精度降低
+    tm *tm_t = localtime(&tt);
+
     std::string filename;
     filename.append(basename);
-    char buf[128] = {0};
-    time_t microSecondsSinceEpoch = time(nullptr);
-    tm *tm_time = localtime(&microSecondsSinceEpoch);
-    snprintf(buf, 128, "%4d/%02d/%02d",
-             tm_time->tm_year + 1900,
-             tm_time->tm_mon + 1,
-             tm_time->tm_mday);
-    filename.append(std::to_string(tm_time->tm_year + 1900));
-    filename.append(std::to_string(tm_time->tm_mon + 1));
-    filename.append(std::to_string(tm_time->tm_mday));
-    filename.append(".log");
+    filename+=std::to_string(tm_t->tm_year + 1900);
+    filename+=std::to_string(tm_t->tm_mon + 1);
+    filename+=std::to_string(tm_t->tm_mday);
+
+
+
+
+
+//    char buf[128] = {0};
+//    time_t microSecondsSinceEpoch = time(nullptr);
+//    tm *tm_time = localtime(&microSecondsSinceEpoch);
+//    snprintf(buf, 128, "%4d/%02d/%02d",
+//             tm_time->tm_year + 1900,
+//             tm_time->tm_mon + 1,
+//             tm_time->tm_mday);
+//    filename.append(std::to_string(tm_time->tm_year + 1900));
+//    filename.append(std::to_string(tm_time->tm_mon + 1));
+//    filename.append(std::to_string(tm_time->tm_mday));
+//    filename.append(".log");
     return filename;
 }

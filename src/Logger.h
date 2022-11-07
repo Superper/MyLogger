@@ -4,6 +4,7 @@
 
 #ifndef PMI_BHF_LOGGER_H
 #define PMI_BHF_LOGGER_H
+
 #include "mutex"
 #include "util/LogConfig.h"
 #include "util/AsyncFileAppender.h"
@@ -14,31 +15,32 @@
         logger->WriteLog(loglevel,filename,line_num,msg);               \
     }while(0)
 
-    class Logger {
-    public:
-        void WriteLog(LogLevel log_level, const char *file_name, uint32_t line_num, const char *msg);
+class Logger {
+public:
+    void WriteLog(LogLevel log_level, const char *file_name, uint32_t line_num, const char *msg);
 
-        void SetLogConfig(const LogConfig &lcf);
+    void SetLogConfig(const LogConfig &lcf);
 
-        static Logger *GetInstance();
+    static Logger *GetInstance();
 
-        Logger(const Logger *c) = delete;
+    Logger(const Logger *c) = delete;
 
-        Logger operator=(Logger) = delete;
+    Logger operator=(Logger) = delete;
 
-    private:
-        Logger();
+private:
+    Logger();
 
-        static Logger *instance_;
+    static Logger *instance_;
 
 
-        std::shared_ptr<AsyncFileAppender> ptr_;
-        std::mutex asyncfa_mutex_;
+    std::shared_ptr<AsyncFileAppender> ptr_;
+    std::mutex asyncfa_mutex_;
 
-        AsyncFileAppender *asyncfa_;
+    AsyncFileAppender *asyncfa_;
 
-        std::string TimeToString();
+    std::string TimeToString();
 
-        std::string GetLogLevelToString(LogLevel level);
-    };
+    std::string GetLogLevelToString(LogLevel level);
+};
+
 #endif //PMI_BHF_LOGGER_H

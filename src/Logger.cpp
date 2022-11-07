@@ -8,11 +8,6 @@
 #include "Logger.h"
 Logger* Logger::instance_ = new Logger();
 Logger* Logger::GetInstance() {
-
-//    static std::once_flag flag;
-//    std::call_once(flag,[&](){
-//        instance_ = new Logger();
-//    });
     return instance_;
 }
 
@@ -25,19 +20,6 @@ void Logger::WriteLog(LogLevel log_level, const char *file_name,uint32_t line_nu
     if (log_level < asyncfa_->logcfg_.log_level) {
         return;
     }
-/*    std::string str_result;
-    if (nullptr != msg) {
-        size_t length = strlen(msg) + 1;  //获取格式化字符串长度
-        std::vector<char> fmt_bufs(length,
-                                   '\0');  //创建用于存储格式化字符串的字符数组
-        int writen_n = vsnprintf(&fmt_bufs[0], fmt_bufs.size(), msg, ap);
-        if (writen_n > 0) {
-            str_result = &fmt_bufs[0];
-        }
-    }
-    if (str_result.empty()) {
-        return;
-    }*/
     std::string data;
     data.append(TimeToString()+"-");
     data.append(GetLogLevelToString(log_level) + "-");
